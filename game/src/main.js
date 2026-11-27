@@ -62,7 +62,8 @@ function paint() {
   drawFarmer(ctx, state);
   drawTurkey(ctx, state);
   ctx.restore();
-  drawHud(ctx, state);
+  // The title sits over a live farmyard by design, but the HUD must not ghost through its overlay.
+  if (screen !== 'title') drawHud(ctx, state);
   // The screens pulse their prompts off the page clock; the run's own time is left alone.
   const view = { ...state, time: clock };
   if (screen === 'title') drawTitle(ctx, view, best);

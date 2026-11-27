@@ -393,7 +393,11 @@ export function drawTurkey(ctx, state) {
 export function drawFarmer(ctx, state) {
   const f = state.farmer;
   const gap = state.gap;
-  const fx = TURKEY.screenX - gap;
+  // gap is metres, not pixels: feeding it straight into fx let the farmer overlap the turkey at
+  // small gaps. Map it to a pixel offset with a floor (he stays visibly behind the tail fan and
+  // pitchfork reach) and a ceiling (he never slides off the left edge at the largest gap).
+  const pxGap = Math.min(265, Math.max(220, 150 + gap));
+  const fx = TURKEY.screenX - pxGap;
   const lean = 0.16 + f.lean * 0.24;
   const bob = Math.abs(Math.sin(f.stride)) * 4;
   const angry = f.angry > 0;
@@ -1027,10 +1031,10 @@ export function drawObstacles(ctx, state) {
 // Part 3: the readouts over the world and the four screens between runs.
 // ---------------------------------------------------------------------------------------------
 
-function panel(ctx, x, y, w, h, radius) {
+function panel(ctx, x, y, w, h, radius, alpha = 0.84) {
   // Opaque enough to stay legible on the kitchen's light tiled wall, where a 62% wash let the
   // tan background through and the muted HUD labels all but vanished.
-  ctx.fillStyle = 'rgba(24,13,6,0.84)';
+  ctx.fillStyle = `rgba(24,13,6,${alpha})`;
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, radius);
   ctx.fill();
@@ -1155,7 +1159,8 @@ export function drawHud(ctx, state) {
   ctx.roundRect(barX, barY, Math.max(6, 320 * progress), 8, 4);
   ctx.fill();
 
-  if (state.stageBanner > 0) {
+  // The banner is an in-play cue only: at an outcome it would ghost through the CAUGHT/ESCAPED panel.
+  if (state.stageBanner > 0 && state.outcome === 0) {
     const a = Math.min(1, state.stageBanner);
     ctx.save();
     ctx.globalAlpha = a;
@@ -1231,7 +1236,7 @@ export function drawPaused(ctx) {
 
 export function drawCaught(ctx, state) {
   overlay(ctx, 0.7);
-  panel(ctx, W / 2 - 300, 200, 600, 380, 24);
+  panel(ctx, W / 2 - 300, 200, 600, 380, 24, 1);
   label(ctx, 'CAUGHT!', W / 2, 280, 72, PALETTE.danger, 'center');
   label(ctx, 'The farmer has you by the tail feathers.', W / 2, 320, 22, PALETTE.text, 'center');
 
@@ -1246,7 +1251,7 @@ export function drawCaught(ctx, state) {
 
 export function drawEscaped(ctx, state) {
   overlay(ctx, 0.62);
-  panel(ctx, W / 2 - 300, 180, 600, 400, 24);
+  panel(ctx, W / 2 - 300, 180, 600, 400, 24, 1);
 
   const confetti = 40;
   for (let i = 0; i < confetti; i += 1) {

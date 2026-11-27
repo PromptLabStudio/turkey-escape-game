@@ -183,6 +183,9 @@ function sceneKitchen(run) {
     stageAtDoor(run, kitchen, offset);
     play(run, 10, goodPilot);
   }
+  // An oven already half off the left edge reads as scenery, and it stops ensureShape from staging
+  // a full one; drop anything that far behind the turkey so the hazard is properly in frame.
+  run.state.obstacles = run.state.obstacles.filter((ob) => ob.shape !== 'oven' || ob.x > 220);
   dress(run, 2);
   ensureShape(run, 'oven', 820);
   return { screen: 'play', best: bestFor(run, 8200) };
@@ -217,7 +220,28 @@ function sceneEnd(run) {
   return { screen: 'caught', best: bestFor(run, 2100) };
 }
 
-const SCENES = { start: sceneStart, play: scenePlay, kitchen: sceneKitchen, end: sceneEnd };
+/**
+ * The treeline: a clean run all the way to the finish. Knives and ovens can still end a good run
+ * short, so the last stretch is taken again from the kitchen door, a little further along each time,
+ * where the spawns fall differently; failing that, the outcome is forced the way sceneEnd does it.
+ */
+function sceneEscaped(run) {
+  run.reset();
+  play(run, 240, goodPilot, 1500);   // RULES.finishMetres: the step that crosses it ends the run
+  const kitchen = STAGES[2].start;
+  for (const offset of [440, 452, 464]) {
+    if (run.state.outcome === OUTCOME_ESCAPED) break;
+    stageAtDoor(run, kitchen, offset);
+    // The farmer starts this leg as far back as the stage allows, so the last metres still survive.
+    run.state.gap = STAGES[2].gapCeiling;
+    play(run, 240, goodPilot, 1500);
+  }
+  if (run.state.outcome !== OUTCOME_ESCAPED) Object.assign(run.state, { outcome: OUTCOME_ESCAPED, metres: 1500, lives: Math.max(1, run.state.lives) });
+  dress(run);
+  return { screen: 'escaped', best: bestFor(run, 9000) };
+}
+
+const SCENES = { start: sceneStart, play: scenePlay, kitchen: sceneKitchen, end: sceneEnd, escaped: sceneEscaped };
 
 /**
  * Stage `name` on `run` (from createRun(seed)) and report the screen main.js should paint plus a
