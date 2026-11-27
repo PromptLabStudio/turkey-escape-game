@@ -1028,7 +1028,9 @@ export function drawObstacles(ctx, state) {
 // ---------------------------------------------------------------------------------------------
 
 function panel(ctx, x, y, w, h, radius) {
-  ctx.fillStyle = 'rgba(24,13,6,0.62)';
+  // Opaque enough to stay legible on the kitchen's light tiled wall, where a 62% wash let the
+  // tan background through and the muted HUD labels all but vanished.
+  ctx.fillStyle = 'rgba(24,13,6,0.84)';
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, radius);
   ctx.fill();
@@ -1157,7 +1159,7 @@ export function drawHud(ctx, state) {
     const a = Math.min(1, state.stageBanner);
     ctx.save();
     ctx.globalAlpha = a;
-    ctx.fillStyle = 'rgba(24,13,6,0.55)';
+    ctx.fillStyle = 'rgba(24,13,6,0.80)';
     ctx.beginPath();
     ctx.roundRect(W / 2 - 250, 210, 500, 92, 18);
     ctx.fill();
